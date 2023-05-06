@@ -9,7 +9,7 @@ const port = process.env.PORT || 3030
 require('dotenv').config()
 
 app.use(express.json())
-app.use(cors)
+app.use(cors())
 
 app.use('/api/auth',auth)
 app.use('/api/notes',notes)
