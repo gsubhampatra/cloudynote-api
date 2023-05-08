@@ -7,7 +7,7 @@ const jwt = require("jsonwebtoken");
 const fetchuser = require("../middleware/fetchuser");
 const secrate = process.env.JWT_SECRATE;
 require('dotenv').config()
-
+let success = false;
 //route 1 create user
 router.post(
   "/create-user",
@@ -23,15 +23,17 @@ router.post(
     //check validation
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      success = false
+      return res.status(400).json({ success, errors: errors.array() });
     }
     //check if the email id is already exist or not
     try {
       let user = await User.findOne({ email: req.body.email });
       if (user) {
+        success=false
         return res
           .status(400)
-          .json({ error: "sorry user with this email is alrady exist " });
+          .json({success, error: "sorry user with this email is alrady exist " });
       }
       //encrypt the password
       const salt = bcrypt.genSaltSync(10);
@@ -50,8 +52,8 @@ router.post(
       };
 
       const authToken = jwt.sign(data, secrate);
-
-      res.json({ authToken });
+      success=true;
+      res.json({ success, authToken });
     } catch (error) {
       console.log(error.massage);
     }
@@ -71,7 +73,7 @@ router.post(
     //check errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      return res.status(400).json({ success, errors: errors.array() });
     }
     const { password, email } = req.body;
 
@@ -81,13 +83,13 @@ router.post(
       if (!user) {
         res
           .status(400)
-          .json({ error: "please login with correct credentials" });
+          .json({ success, error: "please login with correct credentials" });
       }
       const passwordCompare = bcrypt.compareSync(password, user.password);
       if (!passwordCompare) {
         res
           .status(400)
-          .json({ error: "please login with correct credentials" });
+          .json({ success, error: "please login with correct credentials" });
       }
 
       const data = {
@@ -110,7 +112,8 @@ router.post("/getuser", fetchuser, async (req, res) => {
   try {
     let userId = req.user.id;
     const user = await User.findById(userId).select("-password");
-    return res.json({ user });
+    success=true
+    return res.json({ success, user });
   } catch (error) {
     return res.status(400).send(error);
   }
