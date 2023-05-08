@@ -7,7 +7,6 @@ const jwt = require("jsonwebtoken");
 const fetchuser = require("../middleware/fetchuser");
 const secrate = process.env.JWT_SECRATE;
 require('dotenv').config()
-let success = false;
 //route 1 create user
 router.post(
   "/create-user",
@@ -15,12 +14,13 @@ router.post(
   body("username")
     .isLength({ min: 3 })
     .withMessage("must be at least 3 chars long"),
-  body("email").isEmail().withMessage("enter valid email id "),
-  body("password")
+    body("email").isEmail().withMessage("enter valid email id "),
+    body("password")
     .isLength({ min: 5 })
     .withMessage("must be at least 3 chars long"),
-  async (req, res) => {
+    async (req, res) => {
     //check validation
+    let success = false;
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       success = false
@@ -70,6 +70,7 @@ router.post(
     .withMessage("can not be blank")
     .exists(),
   async (req, res) => {
+    let success= false;
     //check errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -87,6 +88,7 @@ router.post(
       }
       const passwordCompare = bcrypt.compareSync(password, user.password);
       if (!passwordCompare) {
+        success=false
         res
           .status(400)
           .json({ success, error: "please login with correct credentials" });
@@ -98,7 +100,8 @@ router.post(
         },
       };
       const authToken = jwt.sign(data, secrate);
-      res.json({ authToken });
+      success=true
+      res.json({ success, authToken });
     } catch (error) {
       console.log(error.massage);
       res.status(400).send("internal server error occure");
@@ -112,7 +115,7 @@ router.post("/getuser", fetchuser, async (req, res) => {
   try {
     let userId = req.user.id;
     const user = await User.findById(userId).select("-password");
-    success=true
+   let success=true
     return res.json({ success, user });
   } catch (error) {
     return res.status(400).send(error);
